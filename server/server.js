@@ -8,7 +8,8 @@ dotenv.config()
 
 const app = express()
 
-const PORT = 3001
+// Toma el puerto asignado por Render o el 3001 por defecto localmente
+const PORT = process.env.PORT || 3001
 
 
 // =========================================
@@ -88,6 +89,6 @@ app.post('/api/login', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(
-        `Servidor backend ejecutándose en http://localhost:${PORT}`
+        `Servidor backend ejecutándose en puerto ${PORT}`
     )
 })
