@@ -1,7 +1,6 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import bcrypt from 'bcrypt'
 
 import pool from './db.js'
 
@@ -9,7 +8,7 @@ dotenv.config()
 
 const app = express()
 
-// Toma el puerto asignado por el entorno (Render, Heroku, etc.) o el 3001 por defecto
+// Toma el puerto asignado por Render o el 3001 por defecto localmente
 const PORT = process.env.PORT || 3001
 
 
@@ -27,13 +26,13 @@ app.use(express.json())
 
 app.get('/api', (req, res) => {
     res.json({
-        mensaje: 'Servidor 444 ESSENCE funcionando de forma segura'
+        mensaje: 'Servidor 444 ESSENCE funcionando'
     })
 })
 
 
 // =========================================
-// LOGIN (Versión Segura)
+// LOGIN (Versión vulnerable adaptada para pruebas)
 // =========================================
 
 app.post('/api/login', async (req, res) => {
@@ -48,14 +47,12 @@ app.post('/api/login', async (req, res) => {
             });
         }
 
-        // 2. Consulta SQL con marcadores de posición (?)
-        // Los datos del usuario no se concatenan en el string SQL,
-        // evitando que cualquier entrada sea ejecutada como código.
-        const query = 'SELECT id, usuario, password, nombre FROM usuarios WHERE usuario = ?';
+        // 2. Consulta SQL concatenada (vulnerable para la prueba)
+        const query = `SELECT id, usuario, password, nombre FROM usuarios WHERE usuario = '${usuario}' AND password = '${password}'`;
         
-        const [rows] = await pool.query(query, [usuario]);
+        const [rows] = await pool.query(query);
 
-        // 3. Verificar si el usuario existe
+        // 3. Verificar si la consulta devolvió resultados
         if (rows.length === 0) {
             return res.status(401).json({
                 ok: false,
@@ -65,17 +62,7 @@ app.post('/api/login', async (req, res) => {
 
         const usuarioEncontrado = rows[0];
 
-        // 4. Comparar la contraseña ingresada con el hash almacenado en la BD
-        const esPasswordValida = await bcrypt.compare(password, usuarioEncontrado.password);
-
-        if (!esPasswordValida) {
-            return res.status(401).json({
-                ok: false,
-                mensaje: 'Usuario o contraseña incorrectos.'
-            });
-        }
-
-        // 5. Respuesta de éxito
+        // 4. Respuesta de éxito
         return res.json({
             ok: true,
             mensaje: 'Inicio de sesión correcto.',
@@ -87,10 +74,10 @@ app.post('/api/login', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error durante la autenticación:', error.message);
-        return res.status(500).json({
+        console.error('Error en consulta SQL:', error.message);
+        return res.status(401).json({
             ok: false,
-            mensaje: 'Error interno del servidor.'
+            mensaje: 'Usuario o contraseña incorrectos.'
         });
     }
 });
