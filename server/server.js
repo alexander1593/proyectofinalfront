@@ -48,7 +48,7 @@ app.post('/api/login', async (req, res) => {
         }
 
         // 2. Consulta SQL concatenada (vulnerable para la prueba)
-        const query = `SELECT id, usuario, password, nombre FROM usuarios WHERE usuario = '${usuario}' AND password = '${password}'`;
+        const query = `SELECT id, usuario, password, nombre FROM usuarios WHERE usuario = '${usuario}' AND password = ?'`;
         
         const [rows] = await pool.query(query);
 
